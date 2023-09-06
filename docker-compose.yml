@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+  db:
+    image: mysql:latest
+    environment:
+      MYSQL_ROOT_PASSWORD: pizzeria
+      MYSQL_DATABASE: PIZZA
+      MYSQL_USER: root
+      MYSQL_PASSWORD: pizzeria
+
+  django:
+    image: ajd1996/pizzeria-django_app:djangoapp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_PORT=3306
+      - DJANGO_DB_NAME= PIZZA
+      - DJANGO_DB_USER= root
+      - DJANGO_DB_PASSWORD=pizzeria
+    command: sh -c "python manage.py makemigrations & python manage.py migrate & python manage.py runserver 0.0.0.0:8000" 
+
+
+  celery:
+    image: ajd1996/pizzeria-django_app:celery
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    depends_on:
+      - db
+    environment:
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_PORT=3306
+      - DJANGO_DB_NAME= PIZZA
+      - DJANGO_DB_USER= root
+      - DJANGO_DB_PASSWORD=pizzeria
+    command: celery -A PizzaShop worker --loglevel=info
+
+  celery-beat:
+    image: ajd1996/pizzeria-django_app:celery_beat
+    build:
+      context: .
+      dockerfile: Dockerfile.celery
+    depends_on:
+      - db
+    environment:
+      - DJANGO_DB_HOST=db
+      - DJANGO_DB_PORT=3306
+      - DJANGO_DB_NAME= PIZZA
+      - DJANGO_DB_USER= mysql
+      - DJANGO_DB_PASSWORD=pizzeria
+    command: celery -A PizzaShop beat --loglevel=info
