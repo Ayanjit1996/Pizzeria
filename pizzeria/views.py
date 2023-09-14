@@ -18,6 +18,7 @@ class Add_Pizza_order(APIView):
 
         if serializer.is_valid():
 
+            # Get the pizza data from the request
             pizzas_data = request.data.get('pizzas', [])
 
             # Check if there is at least one pizza in the order
@@ -27,8 +28,6 @@ class Add_Pizza_order(APIView):
             # Create the order instance
             order = serializer.save()
 
-            # Get the pizza data from the request
-            pizzas_data = request.data.get('pizzas', [])
             # Create and associate Pizza instances with the order
             for pizza_data in pizzas_data:
                 # Access the pizza attributes from pizza_data
